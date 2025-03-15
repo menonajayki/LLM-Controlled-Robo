@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>H2M Translator</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #f2f2f2, #e6e6e6);
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .container {
+      background: #fff;
+      width: 400px;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      padding: 40px;
+      text-align: center;
+      position: relative;
+    }
+    .logo {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 60px;
+      height: 60px;
+    }
+    h1 {
+      margin-top: 80px;
+      color: #333;
+      font-size: 24px;
+    }
+    label {
+      display: block;
+      text-align: left;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #555;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      font-size: 16px;
+      transition: border-color 0.3s ease;
+    }
+    input[type="text"]:focus {
+      border-color: #007BFF;
+      outline: none;
+    }
+    button {
+      background-color: #007BFF;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .output-box {
+      margin-top: 20px;
+      padding: 10px;
+      border: 2px solid #ccc;
+      border-radius: 5px;
+      background: #f9f9f9;
+      font-size: 16px;
+      color: #333;
+      min-height: 60px;
+      text-align: left;
+      word-wrap: break-word;
+    }
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: #999;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <img class="logo" src="{{ url_for('static', filename='icon.png') }}" alt="Logo">
+    <h1>H2M Translator</h1>
+    <form id="taskForm">
+      <label for="user_task">Task:</label>
+      <input type="text" id="user_task" name="user_task" placeholder="e.g., inspect" required>
+      <button type="submit">Submit</button>
+    </form>
+    <div class="output-box" id="outputBox">
+      <!-- Mapped command or error message will appear here -->
+    </div>
+    <div class="footer">
+      &copy; ARENA2036
+    </div>
+  </div>
+
+  <script>
+    document.getElementById("taskForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const outputBox = document.getElementById("outputBox");
+      outputBox.textContent = "Processing...";
+
+      const formData = new FormData(e.target);
+      const userTask = formData.get("user_task");
+
+      try {
+        const response = await fetch("/", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+          },
+          body: new URLSearchParams({ user_task: userTask })
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          outputBox.textContent = `Error: ${errorText}`;
+          return;
+        }
+
+        const data = await response.json();
+        if (data.status === "success") {
+          outputBox.textContent = `Mapped Command: ${data.command}`;
+        } else {
+          outputBox.textContent = `Error: ${data.message}`;
+        }
+      } catch (error) {
+        outputBox.textContent = `Error: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>
