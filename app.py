@@ -1,10 +1,12 @@
 import os
 import time
 import json
+import subprocess
 from groq import Groq
 import paho.mqtt.client as mqtt
 from flask import Flask, request, render_template, jsonify
 from dotenv import load_dotenv
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -47,18 +49,18 @@ while not mqtt_client.connected_flag:
     print("Waiting for connection...")
     time.sleep(1)
 
-
 def map_task_to_predefined_action(user_task: str) -> str:
     """
     prompt mapping with user input
+    "AROUND_INSPECT moves robot to 8 points for vague inspection, DANCE moves robo randomly "
+
     """
     prompt = (
-        "You have a set of 5 predefined robot action commands (AROUND_INSPECT, DANCE, CLOSE_INSPECT "
-        "AROUND_INSPECT moves robot to 8 points for vague inspection, DANCE moves robo randomly "
+        "You have a set of 1 predefined robot action commands (CLOSE_INSPECT) "
         "CLOSE_INSPECT moves robot 4 points for precise quality "
         "Each command corresponds to a specific, hard-coded action on the robot as mentioned. "
         "Given the following task description, map it to the corresponding predefined action command(s). "
-        "If multiple actions are needed, list them in a random order separated by commas. "
+        "Only single actions are needed "
         "For random command give error as output, do not allow random inputs. "
         "Only return the command names without any additional explanation.\n\n"
         f"Task description: {user_task}"
@@ -67,7 +69,7 @@ def map_task_to_predefined_action(user_task: str) -> str:
     try:
         chat_completion = groq_client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.3-70b-versatile", # change model as needed
+            model="llama-3.3-70b-versatile",  # Change model as needed
         )
         action_command = chat_completion.choices[0].message.content.strip()
         return action_command
@@ -89,6 +91,15 @@ def index():
         return jsonify({"status": "success", "command": action_command})
     return render_template("index.html")
 
+# New Route to Restart the Robot
+@app.route("/restart_robot", methods=["POST"])
+def restart_robot():
+    try:
+        subprocess.run("pkill -f my_application.launch", shell=True)  # Stop the robot
+        subprocess.Popen("roslaunch my_application my_application.launch", shell=True)  # Restart
+        return jsonify({"status": "success", "message": "Robot Restarted Successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
     app.run(debug=False, host="0.0.0.0", port=5000)

@@ -65,6 +65,7 @@
       font-size: 16px;
       cursor: pointer;
       transition: background-color 0.3s ease;
+      margin-top: 10px;
     }
     button:hover {
       background-color: #0056b3;
@@ -92,14 +93,19 @@
   <div class="container">
     <img class="logo" src="{{ url_for('static', filename='icon.png') }}" alt="Logo">
     <h1>H2M Translator</h1>
+
     <form id="taskForm">
       <label for="user_task">Task:</label>
       <input type="text" id="user_task" name="user_task" placeholder="e.g., inspect" required>
       <button type="submit">Submit</button>
     </form>
+
+    <button id="restartRobotButton">Restart Robot</button>
+
     <div class="output-box" id="outputBox">
       <!-- Mapped command or error message will appear here -->
     </div>
+
     <div class="footer">
       &copy; ARENA2036
     </div>
@@ -132,6 +138,24 @@
         const data = await response.json();
         if (data.status === "success") {
           outputBox.textContent = `Mapped Command: ${data.command}`;
+        } else {
+          outputBox.textContent = `Error: ${data.message}`;
+        }
+      } catch (error) {
+        outputBox.textContent = `Error: ${error.message}`;
+      }
+    });
+
+    document.getElementById("restartRobotButton").addEventListener("click", async function() {
+      const outputBox = document.getElementById("outputBox");
+      outputBox.textContent = "Restarting Robot...";
+
+      try {
+        const response = await fetch("/restart_robot", { method: "POST" });
+
+        const data = await response.json();
+        if (data.status === "success") {
+          outputBox.textContent = `Success: ${data.message}`;
         } else {
           outputBox.textContent = `Error: ${data.message}`;
         }

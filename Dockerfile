@@ -1,21 +1,15 @@
-FROM python:3.9-slim
-
-ENV PYTHONDONTWRITEBYTECODE 1
-
-ENV PYTHONUNBUFFERED 1
+FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY . /app
+
+RUN apt-get update && apt-get install -y \
+    ros-melodic-roslaunch \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY . .
-
 EXPOSE 5000
 
-ENV FLASK_APP=app.py
-
-ENV FLASK_RUN_HOST=0.0.0.0
-
-CMD ["flask", "run"]
+CMD ["python", "app.py"]
